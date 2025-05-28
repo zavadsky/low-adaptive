@@ -9,4 +9,5 @@ code:
 intervals:
 
 f - fixed length intervals of code update; L = [sigma*log(n)], sigma - alphabet size, n - text length
+
 v - variable length intervals of code update; first interval = 50 characters; every next 3 times longer

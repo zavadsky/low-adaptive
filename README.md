@@ -6,6 +6,7 @@ code:
 
 0 - Huffman, 1 - Huffman smoothed, 2 - Huffman canonical, 3 - Huffman canonical smoothed, 4 - Shannon, 5 - Shannon smoothed
 
+
 intervals:
 
 f - fixed length intervals of code update; L = [sigma*log(n)], sigma - alphabet size, n - text length

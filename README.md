@@ -1,6 +1,6 @@
-# Test evironment for different methods of adaptive encoding.
+# Test environment for different methods of adaptive encoding.
 Usage:
-adaptive <file name> <number of runs> <code> <intervals>
+adaptive file_name number_of_runs code intervals
 
 code:
 0 - Huffman, 1 - Huffman smoothed, 2 - Huffman canonical, 3 - Huffman canonical smoothed, 4 - Shannon, 5 - Shannon smoothed

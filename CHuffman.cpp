@@ -113,8 +113,6 @@ void Huffman::update_code(uint32_t* freq, uint32_t n) {
 		}
 
 		// prepare canonical huffman codes arrays
-		/*vector <uint32_t> huffLens(sigma);
-		vector <uint32_t> codewords(sigma);*/
 
 		huffLens.resize(sigma);
 		fillHuffLens(int32_t(cntPar.size()) - 1, 0);
@@ -122,80 +120,17 @@ void Huffman::update_code(uint32_t* freq, uint32_t n) {
 		t_minHuffLen = huffLens[0];
 		maxClen = huffLens[sigma - 1];
 
-	/*	fill_n(t_cntCodesPerLen, 32, 0);
-		for (int32_t i = 0; i < sigma; i++)
-		{
-			t_cntCodesPerLen[lengths[i]]++;
-		}*/
-
-		// make codes
-
-
-
 		unsigned char prev = freq_char[0].second;
 		codewords[prev] = 0;
 		lengths[prev]=huffLens[0];
 
-//		cout<<endl<<"==============="<<endl<<"|"<<freq_char[0].first<<" "<<prev<<" "<<(int)huffLens[0]<<"| sigma="<<sigma<<endl;
         for (int32_t i = 1; i < sigma; i++)
 		{
 		    uint8_t c = freq_char[i].second;
-//		    cout<<c;
 		    codewords[c] = (codewords[prev] + 1) << (huffLens[i] - huffLens[i-1]);
 			lengths[c] = huffLens[i];
-//			if(c==208)
-//			cout<<freq_char[i].first<<" "<<c<<" "<<(int)lengths[c]<<" "<<(int)huffLens[i]<<" "<<codewords[c]<<"|";
-//			cout<<"i="<<i<<" "<<freq_char[i].first<<" "<<c<<" "<<(int)lengths[c]<<" "<<(int)huffLens[i]<<" "<<(int)huffLens[i-1]<<" "<<codewords[prev]<<" "<<(int)prev<<"|";
 			prev = c;
 		}
- //   printf("cdwd=%d\n",codewords[208]);
-        //cout<<"~"<<codewords['H']<<"~";
-	//	cout << "Min/Max huff code len: " << t_minHuffLen << " " << t_maxHuffLen << "\n";
-
-		// encode
-		/*uint64_t buffer = 0;
-		uint32_t bufferShift = 64;
-		streamLen = 0;
-
-		for (int32_t i = 0; i < cntCodes; i++)
-		{
-			uint32_t code = codes[i];
-			uint32_t codeLen = huffLens[code];
-			uint64_t huffCode = huffCodes[code];
-			bufferShift -= codeLen;
-			buffer |= huffCode << bufferShift;
-
-			if (bufferShift <= 32)
-			{
-				stream[streamLen] = buffer >> 32;
-				buffer <<= 32;
-				bufferShift += 32;
-				streamLen++;
-			}
-		}
-
-		stream[streamLen] = buffer >> 32;
-		stream[streamLen + 1] = buffer & 0xFFFFFFFF;
-		stream[streamLen + 2] = 0;
-		stream[streamLen + 3] = 0;
-		stream[streamLen + 4] = 0;
-		stream[streamLen + 5] = 0;
-		stream[streamLen + 6] = 0;
-		stream[streamLen + 7] = 0;
-		streamLen += 8;
-        */
-
-
-		/*huffTableLen = 0;
-		*(uint32_t*)(huffTable + huffTableLen) = minHuffCodeLen;
-		huffTableLen += 4;
-		*(uint32_t*)(huffTable + huffTableLen) = maxHuffCodeLen;
-		huffTableLen += 4;
-		for (int32_t i = minHuffCodeLen; i <= maxHuffCodeLen; i++)
-		{
-			*(uint32_t*)(huffTable + huffTableLen) = cntCodesPerLen[i];
-			huffTableLen += 4;
-		}*/
 }
 
 // Non-canonical Huffman decode
@@ -205,32 +140,24 @@ void Huffman::initDecode() {
     delete[] decodeL;
     decode = new uint32_t[dec_size];
     decodeL = new uint8_t[dec_size];
- //   cout<<"7777777777777777777 "<<(int)maxClen<<" ^^^^^^^^^ "<<dec_size<<endl;
-//    printf("cdwd=%d\n",codewords[208]);
     for(int i=0;i<sigma;i++) {
         uint32_t x = codewords[i];
         uint8_t d = maxClen-lengths[i];
- //       printf("i=%d x=%.0x d=%d",i,x,d);
-        //cout<<"x="<<x<<" d="<<d<<endl;
         for(uint32_t j=0;j<(1<<d);j++) {
             decode[(x<<d)+j] = i;
             decodeL[(x<<d)+j] = lengths[i];
         }
     }
- //   cout<<"+++++++++++++++++++++++++++";
 }
 
 void Huffman::update_decode(uint32_t* freq, uint32_t n) {
- //   cout<<"6666666666666";
     update_code(freq,n);
- //   cout<<"8888888888888888888";
     initDecode();
 }
 
 CHuffman::CHuffman(uint32_t a,uint32_t b,bool c):Huffman(a,b,c) {}
 
 void CHuffman::initDecode() {
-//uint32_t huffTable[32];
 vector <int32_t> cntCodesPerLen(32, 0);
         fill(t_cntCodesPerLen,t_cntCodesPerLen+32,0);
 		for (int32_t i = 0; i < sigma; i++) {
@@ -252,17 +179,13 @@ vector <int32_t> cntCodesPerLen(32, 0);
 			t_firstCodeDiff[i] = t_firstCode[i] - t_firstHuffCode[i];
 			if (t_cntCodesPerLen[i] > 0)
 			{
-//				printf("%d %d %d %d|",i,t_firstCode[i],t_firstHuffCode[i],t_cntCodesPerLen[i - 1]);
 				lastHuffCode = t_firstHuffCode[i] + t_cntCodesPerLen[i] - 1;
 				lastHuffCodeLen = i;
 			}
 			else
 			{
-//				t_firstHuffCode[i] = t_firstCodeDiff[i] = -1;
-//                printf("%d %d %d $",i,t_firstCode[i],t_firstHuffCode[i]);
 			}
 		}
-//		printf("\n========================\n");
 		t_limit[maxClen] = 1ull << 32;
 		lastHuffCode = t_firstHuffCode[maxClen];
 		lastHuffCodeLen = maxClen;
@@ -291,7 +214,6 @@ vector <int32_t> cntCodesPerLen(32, 0);
 			}
 
 			t_first[firstBits] = l;
-//			cout<<l<<" @ ";
 		}
 }
 
@@ -299,41 +221,4 @@ void CHuffman::update_decode(uint32_t* freq, uint32_t n) {
     update_code(freq,n);
     initDecode();
 }
-
-/*void CHuffman::huffDecode(unsigned char* codes, uint32_t cntCodes, uint32_t* stream)	{
-	//    uint32_t lens[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-		uint64_t* stream64 = (uint64_t*)stream;
-
-		uint64_t bitStream = stream64[0];
-		int32_t bitStreamRequiredShift = 0, streamPos = 0;
-		int32_t lookupShift = 64 - LOOKUP_BITS;
-
-		for (int32_t codeI = 0; codeI < cntCodes; codeI += CODES_PER_BITSTREAM)
-		{
-			for (int32_t i = 0; i < CODES_PER_BITSTREAM; i++)
-			{
-				uint32_t blockCode = bitStream >> 32;
-				int32_t l = t_first[bitStream >> lookupShift];
-				while (blockCode >= t_limit[l])
-				{
-					l++;
-				}
-				bitStreamRequiredShift += l;
-				bitStream <<= l;
-
-				blockCode >>= 32 - l;
-				blockCode += t_firstCodeDiff[l];
-
-				codes[codeI + i] = blockCode;
-			}
-
-			if (bitStreamRequiredShift > 64)
-			{
-				bitStreamRequiredShift -= 64;
-				streamPos++;
-				bitStream |= stream64[streamPos] << bitStreamRequiredShift;
-			}
-			bitStream |= stream64[streamPos + 1] >> (64 - bitStreamRequiredShift);
-		}
-}*/
 

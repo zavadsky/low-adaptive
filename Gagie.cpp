@@ -20,7 +20,7 @@ GagieDecode::GagieDecode(int text_len,int sc):Gagie(text_len) {
 Gagie::~Gagie(){
     delete[] freqs;
     delete[] codeStream;
-    delete C;
+   // delete C;
 };
 
 void Gagie::BlockEncode(int blockSize) {
@@ -177,7 +177,6 @@ uint64_t* stream64 = (uint64_t*)codeStream;
         BlockDecode(blockSize);
         C->update_decode(freqs,i+=blockSize);
         blockSize *= 3;
-        cout<<outPos<<endl;
     }
     BlockDecode(n-i+5);
  }

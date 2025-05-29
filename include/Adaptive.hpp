@@ -5,18 +5,18 @@
 #include <map>
 #include <set>
 #include <deque>
-#include "WordBasedText.h"
+#include "CharBasedText.h"
 
 using namespace std;
 
 class BackwardEncoder {
 public:
-    BackwardEncoder(WordBasedText*);
+    BackwardEncoder(CharBasedText*);
     BackwardEncoder(int);
-    BackwardEncoder(WordBasedText*,vector<uint32_t>);
+    BackwardEncoder(CharBasedText*,vector<uint32_t>);
     vector<uint32_t> get_dic(){return dic;};
     void checkDecode();
-    void checkDecodeChar(WordBasedText*);
+    void checkDecodeChar(CharBasedText*);
     virtual void serial(string){};
     void serializeChar(uint8_t*);
     void loadChar(uint8_t*);
@@ -24,16 +24,13 @@ protected:
     int n; // text length in characters
     unsigned char* outChar;
     uint32_t* codeStream;
-    WordBasedText* text;
+    CharBasedText* text;
     char* inputText;
     unsigned NYT;
     vector<uint32_t> out;
     vector<uint32_t> dic;
-    ~BackwardEncoder(){
-        delete[] inputText;
-        };
+    ~BackwardEncoder(){delete[] inputText;};
 };
-
 
 typedef struct {
     unsigned up,      // next node up the tree
@@ -57,7 +54,7 @@ protected:
     unsigned char ArcBit = 0;
     uint32_t ArcChar = 0;
     HCoder *huff;
-    WordBasedText* text;
+    CharBasedText* text;
     int len=0;
     const int size = (1<<24);
     void update(string);
@@ -71,7 +68,7 @@ protected:
     void huff_sendid (HCoder *, unsigned);
     void huff_encode (HCoder *, unsigned);
 public:
-    Vitter(WordBasedText*);
+    Vitter(CharBasedText*);
     Vitter(int);
     ~Vitter(){delete[] huff;};
     double encode();
@@ -95,7 +92,7 @@ private:
 class Gagie : public BackwardEncoder {
 private:
 protected:
-    char code_type; // 0 - Huffman, 1 - Huffman smoothed, 2 - Shannon, 3 - Shannon smoothed
+    char code_type; // 0 - Huffman, 1 - Huffman smoothed, 2 - Huffman canonical, 3 - Huffman canonical smoothed, 4 - Shannon, 5 - Shannon smoothed
     uint32_t *freqs;
     UniversalCode* C;
     uint8_t bufferShift;
@@ -105,7 +102,7 @@ protected:
     static const int sigma = 256;
     uint32_t inPos;
 public:
-    Gagie(WordBasedText*,char);
+    Gagie(CharBasedText*,char);
     Gagie(int text_len):BackwardEncoder(text_len){};
     int encode_char();
     int encode_char1();
@@ -122,9 +119,7 @@ public:
     void decode_char();
     virtual void decode_char1();
     double entropy();
-    ~GagieDecode(){
-        //delete[] outChar;
-    };
+    ~GagieDecode(){};
 protected:
     uint32_t outPos;
 };
@@ -140,5 +135,3 @@ public:
     ~CanonicalDecode(){};
 };
 
-void print_vector(vector<uint32_t>,string);
-void print_vector(uint32_t*,uint32_t);

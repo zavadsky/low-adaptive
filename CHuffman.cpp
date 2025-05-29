@@ -14,6 +14,7 @@ Huffman::Huffman(uint32_t s,uint32_t n,bool sc) {
     initCode(n);
 }
 
+// Initialize Huffman codeword lengths for uniform distribution
 void Huffman::fillHuffLens(int32_t i, uint32_t depth)
 	{
 		if (i < sigma)
@@ -32,10 +33,8 @@ void Huffman::initCode(uint32_t n) {
     update_code(freq,n);
 }
 
-
+// Update the Huffman tree
 void Huffman::update_code(uint32_t* freq, uint32_t n) {
- // weight, parent
- //    print_vector(freq,sigma);
 		for (auto& it : cntPar) { it[0] = 0; it[1] = -1; }
 
 		// count frequencies
@@ -50,9 +49,7 @@ void Huffman::update_code(uint32_t* freq, uint32_t n) {
             for(int i=0;i<sigma;i++)  {
                 uint32_t f = (1-smooth)*freq[i] + n*smooth/sigma;
                 freq_char.push_back(make_pair(f,i));
-         //       cout<<f<<" "<<freq[i]<<" # ";
             }
-       //     cout<<endl<<"-----------------------------------"<<endl;
         }
         else {
             for(int i=0;i<sigma;i++)
@@ -64,7 +61,7 @@ void Huffman::update_code(uint32_t* freq, uint32_t n) {
 			cntPar[i][0]=freq[freq_char[i].second];
 		}
 
-		// build some tree to get huffman codes lengths
+		// build some tree to get Huffman codeword lengths
 		int32_t iLeaf = sigma - 1, iNode = sigma, nextNode = sigma;
 
 		for (int32_t iter = 0; iter < sigma - 1; iter++)
@@ -133,7 +130,7 @@ void Huffman::update_code(uint32_t* freq, uint32_t n) {
 		}
 }
 
-// Non-canonical Huffman decode
+// Initialize the lookup tables for non-canonical Huffman decode
 void Huffman::initDecode() {
     uint32_t dec_size = 1<<maxClen;
     delete[] decode;
@@ -150,6 +147,7 @@ void Huffman::initDecode() {
     }
 }
 
+// Update the non-canonical Huffman code during the decoding
 void Huffman::update_decode(uint32_t* freq, uint32_t n) {
     update_code(freq,n);
     initDecode();
@@ -157,6 +155,7 @@ void Huffman::update_decode(uint32_t* freq, uint32_t n) {
 
 CHuffman::CHuffman(uint32_t a,uint32_t b,bool c):Huffman(a,b,c) {}
 
+// Initialize the decoding tables for canonical Huffman codes
 void CHuffman::initDecode() {
 vector <int32_t> cntCodesPerLen(32, 0);
         fill(t_cntCodesPerLen,t_cntCodesPerLen+32,0);
@@ -217,6 +216,7 @@ vector <int32_t> cntCodesPerLen(32, 0);
 		}
 }
 
+// Update the canonical Huffman code during the decoding
 void CHuffman::update_decode(uint32_t* freq, uint32_t n) {
     update_code(freq,n);
     initDecode();

@@ -6,7 +6,7 @@ FILE *In, *Out;
 //unsigned char ArcBit = 0;
 //int ArcChar = 0;
 
-Vitter::Vitter(WordBasedText* w):BackwardEncoder(w) {
+Vitter::Vitter(CharBasedText* w):BackwardEncoder(w) {
     huff = huff_init (size, size);
 }
 
@@ -391,42 +391,20 @@ unsigned symbol, down;
     return symbol;
 }
 
-double Vitter::encode() {
-std::string word;
-    text->text_rewind();
-    ArcChar=ArcBit=0;
-    while(! text->eof()) {
-		word=text->get_word();
-        huff_encode(huff, text->word_symbol[word]);
-    }
-    return len;
-}
 
 int Vitter::encode_char() {
 char c;
     for(int i=0;i<n;i++) {
         huff_encode(huff, inputText[i]);
-//        cout<<inputText[i];
     }
-    /*text->text_rewind();
-    while(! text->eof()) {
-		c=text->get_char();
-            huff_encode(huff,c);
-    }*/
     return len<<2;
 }
 
 void VitterDecode::decode_char() {
 char c;
-    /*text->text_rewind();
-    while(! text->eof()) {
-		c=text->get_char();
-    delete huff;*/
     inPos = 0;
     huff = huff_init (size, size);
     for(int i=0;i<n;i++) {
         outChar[i]=huff_decode(huff);
-        //cout<<outChar[i];
     }
-    //}
 }

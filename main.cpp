@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <windows.h>
 #include "include\UniversalCode.h"
-#include "include\WordBasedText.h"
+#include "include\CharBasedText.h"
 #include "include\Adaptive.hpp"
 
 #pragma GCC diagnostic push
@@ -12,8 +12,9 @@
 double m_time;
 LARGE_INTEGER start, finish, freq;
 
-uint8_t buffer1[25000000];
+uint8_t buffer1[25000000]; // store the results of encoding
 
+// Time measurement defined for Windows
 #define measure_start()  \
 	QueryPerformanceFrequency(&freq); \
 	QueryPerformanceCounter(&start);
@@ -27,31 +28,25 @@ int main(int argc, char** argv) {
     if(argc<2)
         cout<<"Incorrect number of command line arguments.";
     else {
-        static const int sigma = 256;
         string ifname(argv[1]);
         int iter = atoi(argv[2]);
         int smoothed = atoi(argv[3]); // 0 - Huffman, 1 - Huffman smoothed, 2 - Huffman canonical, 3 - Huffman canonical smoothed, 4 - Shannon, 5 - Shannon smoothed
         char intervals;
         if(smoothed<6)
-            intervals = argv[4][0];
-        std::ofstream out(ifname+".enc", std::ios::binary);
-        WordBasedText *wa;
-        VitterDecode *decv;
-        int vs,vms,alg2s,alg4s,gs;             // Size of the text encoded with different algorithms
-        vector<uint8_t> bmix_code{4,2,2,2,1,2}; // BCMix code for Alg. 2
-        double vt=0,vmt=0,alg2t=0,alg4t=0,gt=0;  // Encoding/decoding time
-        wa = new WordBasedText(ifname,1);   // Pre-process the text
-
-        cout<<endl<<"================ Encoding. ================== iterations="<<iter<<endl;
+            intervals = argv[4][0]; // v/f - variable/fixed length intervals of code update
+        CharBasedText *wa = new CharBasedText(ifname);   // Pre-process the text;
+        int gs;             // Size of the text encoded with different algorithms
+        double gt=0,ent;  // Encoding/decoding time; Entropy H0
         for(int i=0;i<iter;i++) {
-                // Gagie 2022
-                Gagie *g = new Gagie(wa,smoothed);
+                Gagie *g = new Gagie(wa,smoothed);                // Gagie 2022
+                if(i==0)
+                    cout<<endl<<"=========== Encoding. ============ iterations="<<iter<<endl;
                 if(smoothed==6) {
                     Vitter* v = new Vitter(wa);
                     measure_start();
                     gs = v->encode_char();
                     measure_end();
-                    if(i==iter-1)
+                    if(i==iter-1)   // Store the result of the last iteration for decoding
                         v->serializeChar(buffer1);
                     delete v;
                 } else {
@@ -61,7 +56,10 @@ int main(int argc, char** argv) {
                     else
                         gs = g->encode_char1(); // encode_char1 - Variable Length Blocks
                     measure_end();
-                    g->serializeChar(buffer1);
+                    if(i==iter-1) {// Store the result of the last iteration for decoding
+                        g->serializeChar(buffer1);
+                        ent = (double)g->entropy();
+                    }
                     delete g;
                 }
                 gt += m_time;
@@ -69,23 +67,25 @@ int main(int argc, char** argv) {
             }
         gt/=iter;
         cout<<endl<<"Encoding time= "<<gt<<endl;
-        cout<<endl<<"Encoded size= "<<gs<<" ("<<(float)gs*8/wa->Nchar<<" bits per symbol)"<<endl;
-
+        cout<<endl<<"Encoded size= "<<gs<<" ("<<(float)gs*8/wa->Nchar<<" bits per symbol)."<<endl;
+        if(smoothed<6) printf("Entropy=%.0f (%f bits per symbol).\n",ent,(float)ent*8/wa->Nchar);
+        VitterDecode *decv; // Class for Vitter's code decoding
         cout<<endl<<"================ Decoding. ================== iterations="<<iter<<endl;
-        vt=vmt=alg2t=alg4t=gt=0;
+        gt=0;
         for(int k=0;k<iter;k++) {
                 GagieDecode* g;
-                measure_start();
                 if(smoothed==6) {
                     decv = new VitterDecode(wa->Nchar);
-                    decv->loadChar(buffer1);
+                    decv->loadChar(buffer1);    // Load the encoded bitstream from memory
+                    measure_start();
                     decv->decode_char();
                 } else {
                     if(smoothed>1 && smoothed<4)
-                        g = new CanonicalDecode(wa->Nchar,smoothed);
+                        g = new CanonicalDecode(wa->Nchar,smoothed); // canonical Huffman
                     else
-                        g = new GagieDecode(wa->Nchar,smoothed);
-                    g->loadChar(buffer1);
+                        g = new GagieDecode(wa->Nchar,smoothed);    // non-canonical Huffman or Shannon
+                    g->loadChar(buffer1);       // Load the encoded bitstream from memory
+                    measure_start();
                     if(intervals=='f')
                         g->decode_char();       // decode_char - Fixed Blocks
                     else

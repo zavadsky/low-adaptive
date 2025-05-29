@@ -3,7 +3,7 @@
 
 int globf=0;
 
-Gagie::Gagie(WordBasedText* w,char c): BackwardEncoder(w),code_type(c) {
+Gagie::Gagie(CharBasedText* w,char c): BackwardEncoder(w),code_type(c) {
     n = text->Nchar;
     freqs = new uint32_t[sigma];
     fill(freqs,freqs+sigma,1);
@@ -20,9 +20,9 @@ GagieDecode::GagieDecode(int text_len,int sc):Gagie(text_len) {
 Gagie::~Gagie(){
     delete[] freqs;
     delete[] codeStream;
-   // delete C;
 };
 
+// Encode an interval between code updates
 void Gagie::BlockEncode(int blockSize) {
 	for(int i=0; i < blockSize; i++) {
         unsigned char c = inputText[inPos++];
@@ -39,6 +39,7 @@ void Gagie::BlockEncode(int blockSize) {
     }
 }
 
+// Decode an interval between code updates, canonical codes
 void CanonicalDecode::BlockDecode(int cntCodes) {
 uint64_t* stream64 = (uint64_t*)codeStream;
 int32_t lookupShift = 64 - LOOKUP_BITS;
@@ -64,6 +65,7 @@ int32_t lookupShift = 64 - LOOKUP_BITS;
 	}
 }
 
+// Decode an interval between code updates, non-canonical codes
 void GagieDecode::BlockDecode(int blockSize) {
 uint8_t lookupShift = 64 - C->maxClen;
     for(int i=0; i < blockSize; i++) {
@@ -81,6 +83,7 @@ uint8_t lookupShift = 64 - C->maxClen;
     }
 }
 
+// Encoding, fixed length update intervals
 int Gagie::encode_char() {
 int blockSize=ceil((double)sigma*log2(n)),i;
     bufferShift = 64;
@@ -101,6 +104,7 @@ int blockSize=ceil((double)sigma*log2(n)),i;
     return streamPos<<2;
 }
 
+// Encoding, variable length update intervals
 int Gagie::encode_char1() {
 int blockSize=50,i;
     bufferShift = 64;
@@ -126,6 +130,7 @@ int blockSize=50,i;
     return streamPos<<2;
 }
 
+// Decoding with non-canonical codes, fixed length update intervals
 void GagieDecode::decode_char() {
 int blockSize=ceil((double)sigma*log2(n)),i;
     bufferShift = outPos = 0;
@@ -145,6 +150,7 @@ int blockSize=ceil((double)sigma*log2(n)),i;
     BlockDecode(n-i+5);
  }
 
+// Decoding with non-canonical codes, variable length update intervals
 void GagieDecode::decode_char1() {
 int blockSize=50,i;
     bufferShift = outPos = 0;
@@ -165,6 +171,7 @@ int blockSize=50,i;
     BlockDecode(n-i+5);
  }
 
+// Decoding with canonical codes, variable length update intervals
 void CanonicalDecode::decode_char1() {
 int blockSize=50,i;
 uint64_t* stream64 = (uint64_t*)codeStream;
@@ -181,6 +188,7 @@ uint64_t* stream64 = (uint64_t*)codeStream;
     BlockDecode(n-i+5);
  }
 
+ // Decoding with canonical codes, fixed length update intervals
 void CanonicalDecode::decode_char() {
 int blockSize=ceil((double)sigma*log2(n)),i;
 uint64_t* stream64 = (uint64_t*)codeStream;
@@ -200,7 +208,7 @@ double Gagie::entropy() {
 double ent=0;
     for(int i=0;i<sigma;i++) {
         if(freqs[i]>0)
-            ent-=(double)freqs[i]*log2((double)freqs[i]/n);
+            ent-=freqs[i]*log2((double)freqs[i]/n);
     }
-    return ent;
+    return ent/8;
 }
